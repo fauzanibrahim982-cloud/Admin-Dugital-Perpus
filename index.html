@@ -1,0 +1,504 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1020">
+
+  <title>Admin Panel | Digital Perpus</title>
+  <meta
+    name="description"
+    content="Panel administrasi Digital Perpus untuk mengelola buku dan anggota."
+  >
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Supabase JavaScript SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Script aplikasi dimuat setelah HTML selesai diproses -->
+  <script defer src="script.js"></script>
+</head>
+
+<body>
+  <div class="app-background"></div>
+
+  <div class="app-container">
+
+    <!-- HEADER -->
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Digital Perpus Admin">
+        <span class="brand-logo">DP</span>
+        <span class="brand-text">
+          <strong>Digital Perpus</strong>
+          <small>ADMIN PANEL</small>
+        </span>
+      </a>
+
+      <div class="header-actions">
+        <a
+          class="website-link"
+          href="https://fauzanibrahim982-cloud.github.io/fauzanstore/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Website utama ↗
+        </a>
+
+        <button
+          id="logoutBtn"
+          class="button button-outline hidden"
+          type="button"
+        >
+          Keluar
+        </button>
+      </div>
+    </header>
+
+    <!-- HALAMAN LOGIN -->
+    <main id="loginView" class="login-layout">
+      <section class="login-intro">
+        <span class="eyebrow">
+          <span class="status-dot"></span>
+          ADMINISTRATION CENTER
+        </span>
+
+        <h1>
+          Kelola perpustakaanmu
+          <span>dengan lebih mudah.</span>
+        </h1>
+
+        <p>
+          Selamat datang di pusat pengelolaan Digital Perpus.
+          Masuk menggunakan akun yang memiliki izin administrator
+          untuk mengakses dashboard.
+        </p>
+
+        <div class="feature-list">
+          <div class="feature-item">
+            <span class="feature-icon">📚</span>
+            <div>
+              <strong>Manajemen buku</strong>
+              <small>Pantau dan kelola katalog buku.</small>
+            </div>
+          </div>
+
+          <div class="feature-item">
+            <span class="feature-icon">👥</span>
+            <div>
+              <strong>Manajemen anggota</strong>
+              <small>Lihat profil anggota perpustakaan.</small>
+            </div>
+          </div>
+
+          <div class="feature-item">
+            <span class="feature-icon">🛡️</span>
+            <div>
+              <strong>Akses terverifikasi</strong>
+              <small>Hak akses admin diperiksa melalui Supabase.</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="login-card">
+        <div class="login-card-icon">🔐</div>
+
+        <p class="eyebrow">ADMIN ACCESS</p>
+        <h2>Masuk ke dashboard</h2>
+
+        <p class="muted">
+          Gunakan email dan kata sandi akun Digital Perpus kamu.
+        </p>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="email">Alamat email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="nama@email.com"
+              autocomplete="username"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="password">Kata sandi</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Masukkan kata sandi"
+              autocomplete="current-password"
+              required
+            >
+          </div>
+
+          <button
+            id="loginBtn"
+            class="button button-primary button-full"
+            type="submit"
+          >
+            <span>Masuk sekarang</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </form>
+
+        <p id="loginMessage" class="message" role="status" aria-live="polite"></p>
+
+        <div class="security-note">
+          <span>🔒</span>
+          <span>
+            Dashboard hanya boleh digunakan oleh akun yang telah
+            diberi izin admin.
+          </span>
+        </div>
+      </section>
+    </main>
+
+    <!-- AKUN BUKAN ADMIN -->
+    <section id="deniedView" class="access-denied hidden">
+      <div class="denied-icon">🛡️</div>
+
+      <p class="eyebrow">AKSES DITOLAK</p>
+      <h1>Akun belum memiliki izin admin</h1>
+
+      <p id="deniedMessage" class="muted">
+        Akun berhasil masuk, tetapi belum terdaftar sebagai administrator.
+      </p>
+
+      <button
+        id="deniedLogoutBtn"
+        class="button button-primary"
+        type="button"
+      >
+        Keluar dari akun
+      </button>
+    </section>
+
+    <!-- DASHBOARD ADMIN -->
+    <main id="dashboardView" class="dashboard hidden">
+
+      <section class="dashboard-heading">
+        <div>
+          <p class="eyebrow">OVERVIEW</p>
+          <h1>Dashboard <span>Admin</span></h1>
+          <p id="signedInAs" class="muted">Memuat informasi akun...</p>
+        </div>
+
+        <div class="connection-status">
+          <span class="status-dot"></span>
+          <span>Panel administrator</span>
+        </div>
+      </section>
+
+      <!-- KARTU STATISTIK -->
+      <section class="stats-grid" aria-label="Statistik perpustakaan">
+
+        <article class="stat-card">
+          <div class="stat-card-heading">
+            <span>Total buku</span>
+            <span class="stat-icon purple">📚</span>
+          </div>
+          <strong id="bookCount">—</strong>
+          <small>Data katalog buku</small>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-card-heading">
+            <span>Buku menunggu</span>
+            <span class="stat-icon orange">⏳</span>
+          </div>
+          <strong id="pendingCount">—</strong>
+          <small>Menunggu persetujuan</small>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-card-heading">
+            <span>Total anggota</span>
+            <span class="stat-icon blue">👥</span>
+          </div>
+          <strong id="memberCount">—</strong>
+          <small>Profil yang tersimpan</small>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-card-heading">
+            <span>Pembelian</span>
+            <span class="stat-icon green">🧾</span>
+          </div>
+          <strong id="purchaseCount">—</strong>
+          <small>Data transaksi</small>
+        </article>
+
+      </section>
+
+      <!-- NAVIGASI ADMIN -->
+      <nav class="admin-navigation" aria-label="Menu administrasi">
+        <button
+          class="nav-tab active"
+          type="button"
+          data-tab="books"
+        >
+          📚 Kelola Buku
+        </button>
+
+        <button
+          class="nav-tab"
+          type="button"
+          data-tab="members"
+        >
+          👥 Anggota
+        </button>
+
+        <button
+          class="nav-tab"
+          type="button"
+          data-tab="purchases"
+        >
+          🧾 Pembelian
+        </button>
+
+        <button
+          class="nav-tab"
+          type="button"
+          data-tab="banner"
+        >
+          🖼️ Banner Website
+        </button>
+      </nav>
+
+      <!-- MENU KELOLA BUKU -->
+      <section id="tab-books" class="content-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">BOOK MANAGEMENT</p>
+            <h2>Kelola buku</h2>
+            <p class="muted">
+              Periksa buku yang diunggah dan kelola statusnya.
+            </p>
+          </div>
+
+          <button
+            id="refreshBooksBtn"
+            class="button button-outline"
+            type="button"
+          >
+            ↻ Muat ulang
+          </button>
+        </div>
+
+        <div class="filter-row">
+          <input
+            id="bookSearch"
+            type="search"
+            placeholder="Cari judul, penulis, atau kategori..."
+            aria-label="Cari buku"
+          >
+
+          <select id="bookStatusFilter" aria-label="Filter status buku">
+            <option value="all">Semua status</option>
+            <option value="approved">Disetujui</option>
+            <option value="pending">Menunggu</option>
+          </select>
+        </div>
+
+        <p id="booksMessage" class="message" role="status"></p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Informasi buku</th>
+                <th>Penulis</th>
+                <th>Kategori</th>
+                <th>Harga</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+
+            <tbody id="booksTable">
+              <tr>
+                <td colspan="6" class="empty-state">
+                  Data buku akan ditampilkan setelah JavaScript terhubung.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- MENU ANGGOTA -->
+      <section id="tab-members" class="content-panel hidden">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">MEMBER MANAGEMENT</p>
+            <h2>Anggota perpustakaan</h2>
+            <p class="muted">
+              Daftar profil anggota yang tersimpan di database.
+            </p>
+          </div>
+
+          <button
+            id="refreshMembersBtn"
+            class="button button-outline"
+            type="button"
+          >
+            ↻ Muat ulang
+          </button>
+        </div>
+
+        <div class="filter-row">
+          <input
+            id="memberSearch"
+            type="search"
+            placeholder="Cari nama atau ID anggota..."
+            aria-label="Cari anggota"
+          >
+        </div>
+
+        <p id="membersMessage" class="message" role="status"></p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama anggota</th>
+                <th>ID akun</th>
+                <th>Terakhir diperbarui</th>
+              </tr>
+            </thead>
+
+            <tbody id="membersTable">
+              <tr>
+                <td colspan="3" class="empty-state">
+                  Data anggota akan ditampilkan setelah terhubung.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- MENU PEMBELIAN -->
+      <section id="tab-purchases" class="content-panel hidden">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">TRANSACTION MANAGEMENT</p>
+            <h2>Pembelian buku</h2>
+            <p class="muted">
+              Pantau transaksi dan permintaan pembelian anggota.
+            </p>
+          </div>
+
+          <button
+            id="refreshPurchasesBtn"
+            class="button button-outline"
+            type="button"
+          >
+            ↻ Muat ulang
+          </button>
+        </div>
+
+        <p id="purchasesMessage" class="message" role="status"></p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Buku</th>
+                <th>Status</th>
+                <th>ID pembeli</th>
+                <th>Tanggal</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+
+            <tbody id="purchasesTable">
+              <tr>
+                <td colspan="5" class="empty-state">
+                  Data pembelian akan ditampilkan setelah terhubung.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- MENU BANNER -->
+      <section id="tab-banner" class="content-panel hidden">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">WEBSITE CUSTOMIZATION</p>
+            <h2>Banner website utama</h2>
+            <p class="muted">
+              Siapkan gambar banner untuk halaman utama Digital Perpus.
+            </p>
+          </div>
+        </div>
+
+        <form id="bannerForm" class="banner-form">
+          <label class="upload-area" for="bannerFile">
+            <span class="upload-icon">⬆</span>
+            <strong>Pilih gambar banner</strong>
+            <small>PNG, JPG, atau WEBP · maksimal 5 MB</small>
+            <input
+              id="bannerFile"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+            >
+          </label>
+
+          <div class="banner-preview-area">
+            <p class="field-label">Pratinjau banner</p>
+
+            <img
+              id="bannerPreview"
+              class="banner-preview hidden"
+              alt="Pratinjau banner website"
+            >
+
+            <div id="bannerEmpty" class="banner-empty">
+              Gambar banner belum dipilih.
+            </div>
+          </div>
+
+          <button
+            id="saveBannerBtn"
+            class="button button-primary"
+            type="submit"
+          >
+            Simpan banner
+          </button>
+        </form>
+
+        <p id="bannerMessage" class="message" role="status"></p>
+
+        <p class="help-note">
+          Catatan: agar perubahan muncul di website utama, kode website utama
+          juga perlu membaca URL banner dari tabel pengaturan Supabase.
+        </p>
+      </section>
+
+      <footer class="dashboard-footer">
+        <span>© Digital Perpus Admin</span>
+        <span>Panel pengelolaan perpustakaan digital</span>
+      </footer>
+
+    </main>
+
+    <!-- NOTIFIKASI -->
+    <div
+      id="toast"
+      class="toast"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+  </div>
+</body>
+</html>
